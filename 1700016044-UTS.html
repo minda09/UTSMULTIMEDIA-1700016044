@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <title>Melayang di Angkasa</title>
+	 
+<style>
+canvas{background-image: url("cs.jpg"); background-size: 700px 500px;}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var pemain
+var penghalang = [];
+
+function startGame() {
+   pemain = new component(40, 40, "bumi.png", 15, 130, "image");
+   pemain.gravitasi = 0.05;
+   myGameArea.start();
+}
+//game area nya 
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 700;
+        this.canvas.height = 500;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+//untuk komponennya
+function component(width, height, color, x, y, type) {
+    this.type = type;
+	//komponen pemainnya(bumi)
+	if (type == "image") {
+	 this.image = new Image();
+	 this.image.src = color;
+	 }
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y;
+    this.gravitasi = 0;
+    this.kecepatangravitasi = 0;
+    this.update = function() {
+        ctx = myGameArea.context;
+		if  (this.type == "image"){
+		ctx.drawImage(this.image, 
+			this.x,
+			this.y,
+			this.width, this.height);
+		
+		//penghalangnya  
+        } else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+	//posisi/sudut komponen sesuai dengan kecepatan atau angle nya
+    this.Posisi = function() {
+        this.kecepatangravitasi += this.gravitasi;
+        this.x += this.speedX;
+        this.y += this.speedY + this.kecepatangravitasi;
+        this.jatuh();
+    }
+	//function untuk bumi saat jatuh ke bawah
+    this.jatuh = function() {
+	//saat menyentuh titik terendah maka kecepatan gravitasinya 0
+        var titikrendah = myGameArea.canvas.height - this.height;
+        if (this.y > titikrendah) {
+            this.y = titikrendah;
+            this.kecepatangravitasi = 0;
+        }
+    }
+	//function saat bumi bertabrakan dengan penghalangnya
+    this.bertabrakan = function(obj) {
+        var kiri = this.x;
+        var kanan = this.x + (this.width);
+        var atas = this.y;
+        var bawah = this.y + (this.height);
+        var kiri2 = obj.x;
+        var kanan2 = obj.x + (obj.width);
+        var atas2 = obj.y;
+        var bawah2 = obj.y + (obj.height);
+        var crash = true;
+        if ((bawah < atas2) || (atas > bawah2) || (kanan < kiri2) || (kiri > kanan2)) {
+            crash = false;
+        }
+        return crash;
+    }
+}
+
+function updateGameArea() {
+
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    for (i = 0; i < penghalang.length; i += 1) {
+        if (pemain.bertabrakan(penghalang[i])) {
+            return;
+        } 
+    }
+    myGameArea.clear();
+    myGameArea.frameNo += 1;
+    if (myGameArea.frameNo == 1 || interval(150)) {
+        x = myGameArea.canvas.width;
+        minHeight = 25;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 50;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        penghalang.push(new component(40, height, "grey", x, 0));
+        penghalang.push(new component(40, x - height - gap, "grey", x, height + gap));
+    }
+    for (i = 0; i < penghalang.length; i += 1) {
+        penghalang[i].x += -1;
+        penghalang[i].update();
+    }
+    pemain.Posisi();
+    pemain.update();
+}
+//berpindah menggunakan keyboard 
+function movement(sprite)
+{
+    var speed=5;
+    document.body.addEventListener("keydown",function(e)
+    {
+      //if(e.keyCode=='37') sprite.x-=speed; //kiri
+      if(e.keyCode=='38') sprite.y-=speed; //atas
+      //if(e.keyCode=='39') handle.x+=speed; //kanan
+      if(e.keyCode=='40') sprite.y+=speed; //bawah
+    });
+}
+function collision(sprite,pemain)
+{
+}
+function interval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+   return false;
+}
+
+function melayang(n) {
+pemain.gravitasi = n;
+}
+//startGame()
+</script>
+<br><br>
+<button class="btn btn-secondary" onmousedown="melayang(-0.2)" onmouseup="melayang(0.05)">MELAYANG</button>
+<br><p>Note! <br> Klik button 'melayang' untuk membuat bumi melayang </p>
+</body>
+</html>
